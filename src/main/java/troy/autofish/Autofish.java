@@ -130,16 +130,28 @@ public class Autofish {
     public void catchFish() {
         if(!modAutofish.getScheduler().isRecastQueued()) { //prevents double reels
             //queue actions
-            queueRodSwitch();
-            queueRecast();
+            
+            long randomNum = 200 + (long) (Math.random() * (1500 - 200)); //generate random number between 1000 and 3000 milliseconds
+            
+            //use the random number in addition to the normal day on queue RodSwitch and Recast
+            
+            //queue recast, but add on the delay we need for reeling
+            queueRodSwitch(randomNum);
+            queueRecast(randomNum);
 
             //reel in
-            useRod();
+            //useRod();
+            //instead of using rod immediately, just queue it
+            modAutofish.getScheduler().scheduleAction(ActionType.REEL, randomNum, () -> {
+                useRod();
+            });
+
         }
     }
-
-    public void queueRecast() {
-        modAutofish.getScheduler().scheduleAction(ActionType.RECAST, modAutofish.getConfig().getRecastDelay(), () -> {
+    
+    //myRandomNumber is an optional parameter, technically an array so myRandomNum[0] will be used instead of myRandomNum
+    public void queueRecast(long... myRandomNum) {
+        modAutofish.getScheduler().scheduleAction(ActionType.RECAST, myRandomNum[0] + modAutofish.getConfig().getRecastDelay(), () -> {
             //State checks to ensure we can still fish once this runs
             if(hookExists) return;
             if(!isHoldingFishingRod()) return;
@@ -149,8 +161,8 @@ public class Autofish {
         });
     }
 
-    private void queueRodSwitch(){
-        modAutofish.getScheduler().scheduleAction(ActionType.ROD_SWITCH, modAutofish.getConfig().getRecastDelay() - 250, () -> {
+    private void queueRodSwitch(long... myRandomNum){
+        modAutofish.getScheduler().scheduleAction(ActionType.ROD_SWITCH, myRandomNum[0] + modAutofish.getConfig().getRecastDelay() - 250, () -> {
             if(!modAutofish.getConfig().isMultiRod()) return;
 
             switchToFirstRod(client.player);
